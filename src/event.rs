@@ -5,7 +5,7 @@ use std::time::Duration;
 /// The kind of SSE event sent.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Event {
-    /// A retry frame, signaling a new retry duration must be used..
+    /// A retry frame, signaling a new retry duration must be used.
     Retry(Duration),
     /// A data frame containing a message.
     Message(Message),
@@ -22,19 +22,13 @@ impl Event {
         Self::Retry(Duration::from_secs_f64(dur as f64))
     }
 
-    /// Check whether this is a Retry variant.
+    /// Check whether this is a `Retry` variant.
     pub fn is_retry(&self) -> bool {
-        match *self {
-            Self::Retry(_) => true,
-            _ => false,
-        }
+        matches!(*self, Self::Retry(_))
     }
 
     /// Check whether this is a `Message` variant.
     pub fn is_message(&self) -> bool {
-        match *self {
-            Self::Message(_) => true,
-            _ => false,
-        }
+        matches!(*self, Self::Message(_))
     }
 }

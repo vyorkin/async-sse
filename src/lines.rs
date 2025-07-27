@@ -64,7 +64,7 @@ impl<R: AsyncBufRead> Stream for Lines<R> {
         if this.buf.ends_with('\r') {
             this.buf.pop();
         }
-        Poll::Ready(Some(Ok(mem::replace(this.buf, String::new()))))
+        Poll::Ready(Some(Ok(std::mem::take(this.buf))))
     }
 }
 
@@ -76,7 +76,7 @@ fn read_line_internal<R: AsyncBufRead + ?Sized>(
     read: &mut usize,
 ) -> Poll<io::Result<usize>> {
     let ret = ready!(read_until_internal(reader, cx, bytes, read));
-    if str::from_utf8(&bytes).is_err() {
+    if str::from_utf8(bytes).is_err() {
         Poll::Ready(ret.and_then(|_| {
             Err(io::Error::new(
                 io::ErrorKind::InvalidData,

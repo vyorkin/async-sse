@@ -39,7 +39,7 @@ async fn decode_stream_when_fed_by_line() -> http_types::Result<()> {
     let reader = decode(Cursor::new(":ok\nevent:message\nid:id1\ndata:data1\n\n"));
     let res = reader.map(|i| i.unwrap()).collect::<Vec<_>>().await;
     assert_eq!(res.len(), 1);
-    assert_message(res.get(0).unwrap(), "message", "data1", Some("id1"));
+    assert_message(res.first().unwrap(), "message", "data1", Some("id1"));
     Ok(())
 }
 
@@ -127,12 +127,12 @@ async fn comments() -> http_types::Result<()> {
     let longstring = "x".repeat(2049);
     let mut input = concat!("data:1\r", ":\0\n", ":\r\n", "data:2\n", ":").to_string();
     input.push_str(&longstring);
-    input.push_str("\r");
+    input.push('\r');
     input.push_str("data:3\n");
     input.push_str(":data:fail\r");
-    input.push_str(":");
+    input.push(':');
     input.push_str(&longstring);
-    input.push_str("\n");
+    input.push('\n');
     input.push_str("data:4\n\n");
     let mut reader = decode(Cursor::new(input));
     assert_message(

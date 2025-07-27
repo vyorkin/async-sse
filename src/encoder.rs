@@ -108,17 +108,17 @@ impl Sender {
     ) -> io::Result<()> {
         // Write the event name
         if let Some(name) = name.into() {
-            self.inner_send(format!("event:{}\n", name)).await?;
+            self.inner_send(format!("event:{name}\n")).await?;
         }
 
         // Write the id
         if let Some(id) = id {
-            self.inner_send(format!("id:{}\n", id)).await?;
+            self.inner_send(format!("id:{id}\n")).await?;
         }
 
         // Write the data section, and end.
         for line in data.lines() {
-            let msg = format!("data:{}\n", line);
+            let msg = format!("data:{line}\n");
             self.inner_send(msg).await?;
         }
         self.inner_send("\n").await?;
@@ -130,12 +130,12 @@ impl Sender {
     pub async fn send_retry(&self, dur: Duration, id: Option<&str>) -> io::Result<()> {
         // Write the id
         if let Some(id) = id {
-            self.inner_send(format!("id:{}\n", id)).await?;
+            self.inner_send(format!("id:{id}\n")).await?;
         }
 
         // Write the retry section, and end.
         let dur = dur.as_secs_f64() as u64;
-        let msg = format!("retry:{}\n\n", dur);
+        let msg = format!("retry:{dur}\n\n");
         self.inner_send(msg).await?;
         Ok(())
     }

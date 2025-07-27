@@ -15,7 +15,6 @@ where
     Decoder {
         lines: Lines::new(reader),
         processed_bom: false,
-        buffer: vec![],
         last_event_id: None,
         event_type: None,
         data: vec![],
@@ -29,9 +28,6 @@ pub struct Decoder<R: AsyncBufRead + Unpin> {
     lines: Lines<R>,
     /// Have we processed the optional Byte Order Marker on the first line?
     processed_bom: bool,
-    /// Was the last character of the previous line a \r?
-    /// Bytes that were fed to the decoder but do not yet form a message.
-    buffer: Vec<u8>,
     /// The _last event ID_ buffer.
     last_event_id: Option<String>,
     /// The _event type_ buffer.
@@ -49,11 +45,11 @@ impl<R: AsyncBufRead + Unpin> Decoder<R> {
             None
         } else {
             // Removing tailing newlines
-            if self.data.ends_with(&[b'\n']) {
+            if self.data.ends_with(b"\n") {
                 self.data.pop();
             }
             let name = self.event_type.take().unwrap_or("message".to_string());
-            let data = std::mem::replace(&mut self.data, vec![]);
+            let data = std::mem::take(&mut self.data);
             // The _last event ID_ buffer persists between messages.
             let id = self.last_event_id.clone();
             Some(Event::new_msg(name, data, id))
@@ -83,7 +79,7 @@ impl<R: AsyncBufRead + Unpin> Stream for Decoder<R> {
                 &line
             };
 
-            log::trace!("> new line: {:?}", line);
+            log::trace!("> new line: {line}");
             let mut parts = line.splitn(2, ':');
             loop {
                 match (parts.next(), parts.next()) {
@@ -105,7 +101,7 @@ impl<R: AsyncBufRead + Unpin> Stream for Decoder<R> {
                     }
                     // If the field name is "data":
                     (Some("data"), value) => {
-                        log::trace!("> data: {:?}", &value);
+                        log::trace!("> data: {value:?}");
                         // Append the field value to the data buffer,
                         if let Some(value) = value {
                             self.data.extend(strip_leading_space_b(value.as_bytes()));
@@ -122,13 +118,13 @@ impl<R: AsyncBufRead + Unpin> Stream for Decoder<R> {
                         // return Poll::Ready(Ok(self.take_message()).transpose());
                     }
                     // Comment
-                    (Some(""), Some(_)) => (log::trace!("> comment")),
+                    (Some(""), Some(_)) => log::trace!("> comment"),
                     // End of frame
                     (Some(""), None) => {
                         log::trace!("> end of frame");
                         match self.take_message() {
                             Some(event) => {
-                                log::trace!("> end of frame [event]: {:?}", event);
+                                log::trace!("> end of frame [event]: {event:?}");
                                 return Poll::Ready(Some(Ok(event)));
                             }
                             None => {
@@ -149,15 +145,15 @@ impl<R: AsyncBufRead + Unpin> Stream for Decoder<R> {
 /// Remove a leading space (code point 0x20) from a string slice.
 fn strip_leading_space(input: &str) -> &str {
     if input.starts_with(' ') {
-        &input[1..]
+        input.strip_prefix(' ').unwrap()
     } else {
         input
     }
 }
 
 fn strip_leading_space_b(input: &[u8]) -> &[u8] {
-    if input.starts_with(&[b' ']) {
-        &input[1..]
+    if input.starts_with(b" ") {
+        input.strip_prefix(b" ").unwrap()
     } else {
         input
     }
