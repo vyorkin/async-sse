@@ -22,5 +22,5 @@ pin-project-lite = "0.2.16"
 async-channel = "1.1.1"
 
 [dev-dependencies]
-femme = "2.0.0"
+femme = "2.2.1"
 async-std = { version = "1.6.0", features = ["attributes", "unstable"] }
