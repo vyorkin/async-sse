@@ -16,7 +16,7 @@ authors = ["Renée Kooi <renee@kooi.me>", "Yoshua Wuyts <yoshuawuyts@gmail.com>"
 [dependencies]
 futures-lite = "1.11.3"
 http-types = { version = "2.10.0", default-features = false }
-log = "0.4.8"
+log = "0.4.27"
 memchr = "2.7.5"
 pin-project-lite = "0.2.16"
 async-channel = "1.1.1"
