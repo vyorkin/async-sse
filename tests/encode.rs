@@ -31,7 +31,7 @@ async fn encode_message() -> http_types::Result<()> {
     let (sender, encoder) = encode();
     task::spawn(async move { sender.send("cat", "chashu", None).await });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_message(&event, "cat", "chashu", None);
     Ok(())
@@ -42,7 +42,7 @@ async fn encode_message_some() -> http_types::Result<()> {
     let (sender, encoder) = encode();
     task::spawn(async move { sender.send(Some("cat"), "chashu", None).await });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_message(&event, "cat", "chashu", None);
     Ok(())
@@ -53,7 +53,7 @@ async fn encode_message_data_only() -> http_types::Result<()> {
     let (sender, encoder) = encode();
     task::spawn(async move { sender.send(None, "chashu", None).await });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_message(&event, "message", "chashu", None);
     Ok(())
@@ -64,7 +64,7 @@ async fn encode_message_with_id() -> http_types::Result<()> {
     let (sender, encoder) = encode();
     task::spawn(async move { sender.send("cat", "chashu", Some("0")).await });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_message(&event, "cat", "chashu", Some("0"));
     Ok(())
@@ -75,7 +75,7 @@ async fn encode_message_data_only_with_id() -> http_types::Result<()> {
     let (sender, encoder) = encode();
     task::spawn(async move { sender.send(None, "chashu", Some("0")).await });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_message(&event, "message", "chashu", Some("0"));
     Ok(())
@@ -89,7 +89,7 @@ async fn encode_retry() -> http_types::Result<()> {
         sender.send_retry(dur, None).await.unwrap();
     });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_retry(&event, 12);
     Ok(())
@@ -100,7 +100,7 @@ async fn encode_multiline_message() -> http_types::Result<()> {
     let (sender, encoder) = encode();
     task::spawn(async move { sender.send("cats", "chashu\nnori", None).await });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_message(&event, "cats", "chashu\nnori", None);
     Ok(())
@@ -112,7 +112,7 @@ async fn dropping_encoder() -> http_types::Result<()> {
     let sender_clone = sender.clone();
     task::spawn(async move { sender_clone.send("cat", "chashu", None).await });
 
-    let mut reader = decode(BufReader::new(encoder));
+    let mut reader = decode(BufReader::new(Box::pin(encoder)));
     let event = reader.next().await.unwrap()?;
     assert_message(&event, "cat", "chashu", None);
 

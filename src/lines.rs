@@ -32,7 +32,7 @@ pin_project! {
 impl<R> Lines<R> {
     pub(crate) fn new(reader: R) -> Lines<R>
     where
-        R: AsyncBufRead + Unpin + Sized,
+        R: AsyncBufRead + Sized,
     {
         Lines {
             reader,

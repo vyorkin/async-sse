@@ -6,7 +6,9 @@ use std::io;
 use std::pin::Pin;
 use std::time::Duration;
 
-pin_project_lite::pin_project! {
+use pin_project_lite::pin_project;
+
+pin_project! {
     /// An SSE protocol encoder.
     #[derive(Debug)]
     pub struct Encoder {
@@ -24,12 +26,13 @@ impl AsyncRead for Encoder {
         buf: &mut [u8],
     ) -> Poll<io::Result<usize>> {
         let mut this = self.project();
+
         // Request a new buffer if current one is exhausted.
         if this.buf.len() <= *this.cursor {
             match ready!(this.receiver.as_mut().poll_next(cx)) {
-                Some(buf) => {
-                    log::trace!("> Received a new buffer with len {}", buf.len());
-                    *this.buf = buf.into_boxed_slice();
+                Some(new_buf) => {
+                    log::trace!("> Received a new buffer with len {}", new_buf.len());
+                    *this.buf = new_buf.into_boxed_slice();
                     *this.cursor = 0;
                 }
                 None => {

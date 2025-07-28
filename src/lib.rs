@@ -17,7 +17,7 @@
 //!     });
 //!
 //!     // Decode messages using a decoder.
-//!     let mut reader = decode(BufReader::new(encoder));
+//!     let mut reader = decode(BufReader::new(Box::pin(encoder)));
 //!     let event = reader.next().await.unwrap()?;
 //!     // Match and handle the event
 //!
